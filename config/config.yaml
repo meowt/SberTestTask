@@ -1,0 +1,7 @@
+storage:
+  redis:
+    address: "localhost:6379"
+    password: "secret"
+
+router:
+  address: "localhost:9876"
