@@ -1,7 +1,11 @@
 storage:
-  redis:
-    address: "localhost:6379"
-    password: "secret"
+#  redis:
+#    address: "localhost:6379"
+#    password: "secret"
+  cMap:
+    storagePath: ".storage/cMap/cMapStorage.json"
+    deleteTick: 50ms
+    storeTick: 100ms
 
 router:
   address: "localhost:9876"

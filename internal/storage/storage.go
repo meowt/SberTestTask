@@ -18,5 +18,6 @@ func New(cfg *config.StorageConfig) (*Storage, error) {
 	//status := redisClient.Ping(ctx)
 	//return &Storage{Redis: redisClient}, status.Err()
 
-	return &Storage{CM: cMap.Setup(&cfg.CMap)}
+	cm, err := cMap.Setup(&cfg.CMap)
+	return &Storage{CM: cm}, err
 }

@@ -16,8 +16,8 @@ var (
 
 // CMap - custom map with concurrency support & TTL mechanism
 type CMap struct {
-	m  map[string]Value
-	mu sync.Mutex
+	M  map[string]Value
+	Mu sync.Mutex
 }
 
 type Value struct {
@@ -27,18 +27,18 @@ type Value struct {
 
 func New(deleteTick time.Duration) *CMap {
 	cm := &CMap{
-		m:  map[string]Value{},
-		mu: sync.Mutex{},
+		M:  map[string]Value{},
+		Mu: sync.Mutex{},
 	}
 	go func() {
 		for now := range time.Tick(deleteTick) {
-			cm.mu.Lock()
-			for i, v := range cm.m {
+			cm.Mu.Lock()
+			for i, v := range cm.M {
 				if !v.ExpiresAt.IsZero() && now.After(v.ExpiresAt) {
-					delete(cm.m, i)
+					delete(cm.M, i)
 				}
 			}
-			cm.mu.Unlock()
+			cm.Mu.Unlock()
 		}
 	}()
 	return cm
@@ -52,27 +52,27 @@ func (cm *CMap) Put(key string, v interface{}, ttl time.Duration) {
 		value.ExpiresAt = time.Now().Add(ttl)
 	}
 
-	cm.mu.Lock()
-	cm.m[key] = value
-	cm.mu.Unlock()
+	cm.Mu.Lock()
+	cm.M[key] = value
+	cm.Mu.Unlock()
 }
 
 func (cm *CMap) Get(key string) (value interface{}) {
-	cm.mu.Lock()
-	defer cm.mu.Unlock()
-	return cm.m[key].V
+	cm.Mu.Lock()
+	defer cm.Mu.Unlock()
+	return cm.M[key].V
 }
 
 func (cm *CMap) StoreToFile(f *os.File, interval time.Duration) (err error) {
 	var mapData []byte
 	go func() {
 		for range time.Tick(interval) {
-			cm.mu.Lock()
-			if mapData, err = json.Marshal(cm.m); err != nil {
+			cm.Mu.Lock()
+			if mapData, err = json.Marshal(cm.M); err != nil {
 				log.Println(err)
 				return
 			}
-			cm.mu.Unlock()
+			cm.Mu.Unlock()
 
 			//Check of file's openness
 			_, err = f.Read([]byte{})
@@ -120,11 +120,11 @@ func (cm *CMap) LoadFromFile(f *os.File) (*CMap, error) {
 	}
 
 	//Unmarshalling json into map
-	cm.mu.Lock()
-	if err = json.Unmarshal(jsonData, &cm.m); err != nil {
+	cm.Mu.Lock()
+	if err = json.Unmarshal(jsonData, &cm.M); err != nil {
 		return nil, err
 	}
-	cm.mu.Unlock()
+	cm.Mu.Unlock()
 
 	return cm, nil
 }

@@ -13,8 +13,8 @@ import (
 )
 
 type RepoService interface {
-	PutObject(key, value string, ttl time.Duration) (res string, err error)
-	GetObject(key string) (obj models.Object, err error)
+	PutObject(key, value string, ttl time.Duration)
+	GetObject(key string) (obj models.Object)
 }
 
 type Handler struct {
@@ -59,14 +59,8 @@ func (h *Handler) PutObject(c *gin.Context) {
 		ttl = time.Duration(exp) * time.Millisecond
 	}
 
-	res, err := h.Repo.PutObject(key, string(jsonData), ttl)
-	if err != nil {
-		err = c.AbortWithError(http.StatusInternalServerError, err)
-		log.Println(err)
-		return
-	}
-
-	c.JSON(http.StatusOK, res)
+	h.Repo.PutObject(key, string(jsonData), ttl)
+	c.JSON(http.StatusOK, "OK")
 }
 
 func (h *Handler) GetObject(c *gin.Context) {
@@ -76,14 +70,9 @@ func (h *Handler) GetObject(c *gin.Context) {
 		return
 	}
 
-	obj, err := h.Repo.GetObject(key)
+	obj := h.Repo.GetObject(key)
 	if obj.Data == "" {
 		c.JSON(http.StatusNoContent, nil)
-		return
-	}
-	if err != nil {
-		err = c.AbortWithError(http.StatusInternalServerError, err)
-		log.Println(err)
 		return
 	}
 

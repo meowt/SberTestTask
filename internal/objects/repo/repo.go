@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"context"
 	"time"
 
 	"github.com/meowt/SberTestTask/internal/storage"
@@ -18,13 +17,15 @@ func SetupObjectsRepo(s *storage.Storage) *RepoImpl {
 	}
 }
 
-func (r *RepoImpl) PutObject(key, value string, ttl time.Duration) (res string, err error) {
-	status := r.Storage.Redis.Set(context.Background(), key, value, ttl)
-	return status.Result()
+func (r *RepoImpl) PutObject(key, value string, ttl time.Duration) {
+	r.Storage.CM.CMap.Put(key, value, ttl)
+	return
 }
 
-func (r *RepoImpl) GetObject(key string) (obj models.Object, err error) {
-	res := r.Storage.Redis.Get(context.Background(), key)
-	obj.Data, err = res.Result()
+func (r *RepoImpl) GetObject(key string) (obj models.Object) {
+	value := r.Storage.CM.CMap.Get(key)
+	if value != nil {
+		obj.Data = value.(string)
+	}
 	return
 }
