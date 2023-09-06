@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+var (
+	ErrEmptyLoadFile = errors.New("empty load-file")
+)
+
 // CMap - custom map with concurrency support & TTL mechanism
 type CMap struct {
 	m  map[string]Value
@@ -21,13 +25,13 @@ type Value struct {
 	ExpiresAt time.Time   `json:"expires_at"`
 }
 
-func New(d time.Duration) *CMap {
+func New(deleteTick time.Duration) *CMap {
 	cm := &CMap{
 		m:  map[string]Value{},
 		mu: sync.Mutex{},
 	}
 	go func() {
-		for now := range time.Tick(d) {
+		for now := range time.Tick(deleteTick) {
 			cm.mu.Lock()
 			for i, v := range cm.m {
 				if !v.ExpiresAt.IsZero() && now.After(v.ExpiresAt) {
@@ -112,7 +116,7 @@ func (cm *CMap) LoadFromFile(f *os.File) (*CMap, error) {
 
 	//Empty file check
 	if string(jsonData) == "" {
-		return nil, errors.New("empty load-file")
+		return nil, ErrEmptyLoadFile
 	}
 
 	//Unmarshalling json into map
